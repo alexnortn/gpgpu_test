@@ -1,12 +1,12 @@
 "use strict";
 
-var bufferStatus;
-var framebuffer;
-var gpgpUtility;
-var initializer;
-var matrixColumns;
-var matrixRows;
-var texture;
+let bufferStatus;
+let framebuffer;
+let gpgpUtility;
+let initializer;
+let matrixColumns;
+let matrixRows;
+let texture;
 
 matrixColumns = 128;
 matrixRows    = 128;

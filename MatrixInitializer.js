@@ -22,13 +22,13 @@ function MatrixInitializer(gpgpUtility_) {
   "use strict";
 
   /** WebGLRenderingContext */
-  var gl;
-  var gpgpUtility;
-  var heightHandle;
-  var positionHandle;
-  var program;
-  var textureCoordHandle;
-  var widthHandle;
+  let gl;
+  let gpgpUtility;
+  let heightHandle;
+  let positionHandle;
+  let program;
+  let textureCoordHandle;
+  let widthHandle;
 
   /**
    * Compile shaders and link them into a program, then retrieve references to the
@@ -39,8 +39,8 @@ function MatrixInitializer(gpgpUtility_) {
    * @see {https://www.khronos.org/registry/webgl/specs/1.0/#5.6|WebGLProgram}
    */
   this.createProgram = function (gl) {
-    var fragmentShaderSource;
-    var program;
+    let fragmentShaderSource;
+    let program;
 
     // Note that the preprocessor requires the newlines.
     fragmentShaderSource = "#ifdef GL_FRAGMENT_PRECISION_HIGH\n"
@@ -106,7 +106,7 @@ function MatrixInitializer(gpgpUtility_) {
   };
 
   this.getPixels = function() {
-      var buffer;
+      let buffer;
 
       // One each for RGBA component of each pixel
       buffer = new Float32Array(128*128*4);
@@ -130,10 +130,10 @@ function MatrixInitializer(gpgpUtility_) {
    * @param j {integer} the j index of the matrix.
    */
   this.test = function(i, j) {
-    var buffer;
-    var eps;
-    var expected;
-    var passed;
+    let buffer;
+    let eps;
+    let expected;
+    let passed;
 
     // Error tollerance in calculations
     eps = 1.0E-20;
