@@ -150,14 +150,11 @@ function MatrixInitializer(gpgpUtility_) {
                   buffer); // Load pixel data into buffer
 
     expected = i*1000.0 + j;
+    passed = expected === 0.0 ? buffer[0] < eps : Math.abs((buffer[0] - expected)/expected) < eps;
 
-    passed   = expected === 0.0 ? buffer[0] < eps : Math.abs((buffer[0] - expected)/expected) < eps;
-
-    if (!passed)
-    {
-	alert("Read " + buffer[0] + " at (" + i + ", " + j + "), expected " + expected + ".");
+    if (!passed) {
+	    alert("Read " + buffer[0] + " at (" + i + ", " + j + "), expected " + expected + ".");
     }
-
     return passed;
   }
 

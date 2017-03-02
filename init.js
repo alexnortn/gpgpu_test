@@ -12,16 +12,14 @@ matrixColumns = 128;
 matrixRows    = 128;
 gpgpUtility   = new vizit.utility.GPGPUtility(matrixColumns, matrixRows, {premultipliedAlpha:false});
 
-if (GPGPUtility.isFloatingTexture())
-{
+if (gpgpUtility.isFloatingTexture()) {
   // Height and width are set in the constructor.
   texture      = gpgpUtility.makeTexture(WebGLRenderingContext.FLOAT, null);
   framebuffer  = gpgpUtility.attachFrameBuffer(texture);
 
   bufferStatus = gpgpUtility.frameBufferIsComplete();
 
-  if (bufferStatus.isComplete)
-  {
+  if (bufferStatus.isComplete) {
     initializer = new MatrixInitializer(gpgpUtility);
     initializer.initialize(matrixColumns, matrixRows);
 
@@ -32,13 +30,12 @@ if (GPGPUtility.isFloatingTexture())
     initializer.test(  0,   0)
     && initializer.test( 10,  12)
     && initializer.test(100, 100);
+
   }
-  else
-  {
+  else {
     alert(bufferStatus.message);
   }
 }
-else
-{
+else {
   alert("Floating point textures are not supported.");
 }

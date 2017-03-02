@@ -356,7 +356,7 @@ window.vizit.utility = window.vizit.utility || {};
          vertexShaderSource   = "attribute vec3 position;"
                               + "attribute vec2 textureCoord;"
                               + ""
-                              + "letying highp vec2 vTextureCoord;"
+                              + "varying highp vec2 vTextureCoord;"
                               + ""
                               + "void main()"
                               + "{"
