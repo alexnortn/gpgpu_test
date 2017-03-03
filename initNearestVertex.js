@@ -3,7 +3,7 @@
 let bufferStatus;
 let gpgpUtility;
 let initializer;
-let square128;
+let nearestVertex;
 let matrixColumns;
 let matrixRows;
 let framebuffer;
@@ -15,36 +15,6 @@ let texture2;
 matrixColumns = 2048;
 matrixRows    = 2048;
 gpgpUtility   = new vizit.utility.GPGPUtility(matrixColumns, matrixRows, {premultipliedAlpha:false});
-
-// if (gpgpUtility.isFloatingTexture()) {
-//   // Height and width are set in the constructor.
-//   texture      = gpgpUtility.makeTexture(WebGLRenderingContext.FLOAT, null);
-//   framebuffer  = gpgpUtility.attachFrameBuffer(texture);
-
-//   bufferStatus = gpgpUtility.frameBufferIsComplete();
-
-//   if (bufferStatus.isComplete) {
-//     initializer = new MatrixInitializer(gpgpUtility);
-//     initializer.initialize(matrixColumns, matrixRows);
-
-//     // Delete resources no longer in use.
-//     initializer.done();
-
-//     // Tests, terminate on first failure.
-//     initializer.test(  0,   0)
-//     && initializer.test( 10,  10)
-//     && initializer.test(100, 100);
-
-//     console.log('p');
-
-//   }
-//   else {
-//     alert(bufferStatus.message);
-//   }
-// }
-// else {
-//   alert("Floating point textures are not supported.");
-// }
 
 // Assume contact_count < 21K (65K / 3) ~ 2^8 (256x256) for texture size
 function connsToBuffer(conns) {
@@ -65,63 +35,49 @@ function connsToBuffer(conns) {
   return connsList;
 }
 
-// Parse binary blob -> ArrayBuffer
-function blobToBuff(blob) {
-    return new Promise((f, r) => {
-        const fr = new FileReader();
-        fr.onload = () => {
-            f(fr.result);
-        };
-        fr.readAsArrayBuffer(blob);
-    });
-}
-
 let connsBuffer = connsToBuffer(conns);
 let vertsBuffer;
 
 fetch("./verts-10010.bin").then((res) => {
-    return res.blob();
-})
-.then((blob) => {
-    return blobToBuff(blob);
+    return res.arrayBuffer();
 })
 .then((ab) => {
     vertsBuffer = new Float32Array(ab);
 });
 
-// if (gpgpUtility.isFloatingTexture()) {
-//     let gl = gpgpUtility.getGLContext();
+if (gpgpUtility.isFloatingTexture()) {
+    let gl = gpgpUtility.getGLContext();
     
-//     // Manually load up test data into <texture>
-//     let data = new Float32Array(matrixColumns * matrixRows * 4);
-//         // data = data.map(() => Math.random() * 128);
-//         data = data.map((d, i) => i);
+    // Manually load up test data into <texture>
+    let data = new Float32Array(matrixColumns * matrixRows * 4);
+        // data = data.map(() => Math.random() * 128);
+        data = data.map((d, i) => i);
 
-//   // Height and width are set in the constructor.
-//   texture      = gpgpUtility.makeTexture(WebGLRenderingContext.FLOAT, null);
-//                  gpgpUtility.refreshTexture(texture, gl.FLOAT, data);
-//   texture2     = gpgpUtility.makeTexture(WebGLRenderingContext.FLOAT, null);
+  // Height and width are set in the constructor.
+  texture      = gpgpUtility.makeTexture(WebGLRenderingContext.FLOAT, null);
+                 gpgpUtility.refreshTexture(texture, gl.FLOAT, data);
+  texture2     = gpgpUtility.makeTexture(WebGLRenderingContext.FLOAT, null);
 
-//   bufferStatus = gpgpUtility.frameBufferIsComplete();
+  bufferStatus = gpgpUtility.frameBufferIsComplete();
 
-//   if (bufferStatus.isComplete) {
+  if (bufferStatus.isComplete) {
 
-//     square128 = new NearestVertex(gpgpUtility);
-//     square128.square(texture, texture2);
+    // nearestVertex = new NearestVertex(gpgpUtility);
+    // nearestVertex.go(texture, texture2);
 
-//     // Delete resources no longer in use.
-//     square128.done();
+    // Delete resources no longer in use.
+    // nearestVertex.done();
 
-//     let table = document.createElement("TABLE");
-//                 document.body.appendChild(table);
+    let table = document.createElement("TABLE");
+                document.body.appendChild(table);
 
-//     // Tests, terminate on first failure.
-//     square128.test(0, 0, table);
-//   }
-//   else {
-//     alert(bufferStatus.message);
-//   }
-// }
-// else {
-//   alert("Floating point textures are not supported.");
-// }
+    // Tests, terminate on first failure.
+    // nearestVertex.test(0, 0, table);
+  }
+  else {
+    alert(bufferStatus.message);
+  }
+}
+else {
+  alert("Floating point textures are not supported.");
+}

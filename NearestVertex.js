@@ -86,7 +86,7 @@ function NearestVertex(gpgpUtility_) {
    * @param mSquared {WebGLTexture} A texture to be incorporated into a fbo,
    *                                the target for our operations.
    */
-  this.square = function(m, mSquared) {
+  this.go = function(m, mSquared) {
     let m2FrameBuffer;
 
     // Create and bind a framebuffer (for output)
