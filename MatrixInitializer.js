@@ -43,28 +43,54 @@ function MatrixInitializer(gpgpUtility_) {
     let program;
 
     // Note that the preprocessor requires the newlines.
+    // fragmentShaderSource = "#ifdef GL_FRAGMENT_PRECISION_HIGH\n"
+    //                      + "precision highp float;\n"
+    //                      + "#else\n"
+    //                      + "precision mediump float;\n"
+    //                      + "#endif\n"
+    //                      + ""
+    //                      + "uniform float height;"
+    //                      + "uniform float width;"
+    //                      + ""
+    //                      + "varying vec2 vTextureCoord;"
+    //                      + ""
+    //                      + "vec4 computeElement(float s, float t)"
+    //                      + "{"
+    //                      + "  float i = floor(width*s);"
+    //                      + "  float j = floor(height*t);"
+    //                      + "  return vec4(i*1000.0 + j, 0.0, 0.0, 0.0);"
+    //                      + "}"
+    //                      + ""
+    //                      + "void main()"
+    //                      + "{"
+    //                      + "  gl_FragColor = computeElement(vTextureCoord.s, vTextureCoord.t);"
+    //                      + "}";
+
+    // These shader programs will have to be dynamically created just in time wrt unqique cell/mesh characteristics
     fragmentShaderSource = "#ifdef GL_FRAGMENT_PRECISION_HIGH\n"
                          + "precision highp float;\n"
                          + "#else\n"
                          + "precision mediump float;\n"
                          + "#endif\n"
                          + ""
-                         + "uniform float height;"
-                         + "uniform float width;"
+                         + "uniform sampler2D m;\n"
                          + ""
-                         + "varying vec2 vTextureCoord;"
+                         + "varying vec2 vTextureCoord;\n"
                          + ""
-                         + "vec4 computeElement(float s, float t)"
-                         + "{"
-                         + "  float i = floor(width*s);"
-                         + "  float j = floor(height*t);"
-                         + "  return vec4(i*1000.0 + j, 0.0, 0.0, 0.0);"
-                         + "}"
-                         + ""
-                         + "void main()"
-                         + "{"
-                         + "  gl_FragColor = computeElement(vTextureCoord.s, vTextureCoord.t);"
-                         + "}";
+                         + "void main() {\n"
+                         +    "float i, j;\n"
+                         +    "float value = 0.0;\n"
+                         +    ""
+                         +    "i = vTextureCoord.s;\n"
+                         +    "j = vTextureCoord.t;\n"
+                         +    ""
+                         +    "for (float k=0.0; k<128.0; ++k) {\n"
+                         +    "  value += texture2D(m, vec2(i, k/128.0)).r * texture2D(m, vec2(k/128.0, j)).r;\n"
+                         +    "}\n"
+                         +    ""
+                         +    "gl_FragColor.r = value;\n"
+                         + "};\n"
+                         
 
     program              = gpgpUtility.createProgram(null, fragmentShaderSource);
 
@@ -121,6 +147,36 @@ function MatrixInitializer(gpgpUtility_) {
 
     return buffer;
   }
+
+  /**
+   * Runs the program to do the actual work. On exit the framebuffer &
+   * texture are populated with the square of the input matrix, m. Use
+   * gl.readPixels to retrieve texture values.
+   *
+   * @param m        {WebGLTexture} A texture containing the elements of m.
+   * @param mSquared {WebGLTexture} A texture to be incorporated into a fbo,
+   *                                the target for our operations.
+   */
+  this.square = function(m, mSquared)
+  {
+    var m2FrameBuffer;
+
+    // Create and bind a framebuffer
+    m2FrameBuffer = gpgpUtility.attachFrameBuffer(mSquared);
+
+    gl.useProgram(program);
+
+    gpgpUtility.getStandardVertices();
+
+    gl.vertexAttribPointer(positionHandle,     3, gl.FLOAT, gl.FALSE, 20, 0);
+    gl.vertexAttribPointer(textureCoordHandle, 2, gl.FLOAT, gl.FALSE, 20, 12);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, m);
+    gl.uniform1i(textureHandle, 0);
+
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  };
 
   /**
    * Read back the i, j pixel and compare it with the expected value. The expected value

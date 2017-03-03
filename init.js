@@ -28,8 +28,10 @@ if (gpgpUtility.isFloatingTexture()) {
 
     // Tests, terminate on first failure.
     initializer.test(  0,   0)
-    && initializer.test( 10,  12)
+    && initializer.test( 10,  10)
     && initializer.test(100, 100);
+
+    console.log('p');
 
   }
   else {
