@@ -222,6 +222,7 @@ window.vizit.utility = window.vizit.utility || {};
        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
        // Pixel format and data for the texture
        gl.texImage2D(gl.TEXTURE_2D, // Target, matches bind above.
                      0,             // Level of detail.
@@ -452,7 +453,7 @@ window.vizit.utility = window.vizit.utility || {};
        let reference;
 
        reference = gl.getUniformLocation(program, name);
-       if(reference === -1) {
+       if (reference === -1) {
          alert('Can not find uniform ' + name + '.');
        }
        return reference;

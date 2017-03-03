@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Vizit Solutions
+ * Copyright 2017 Alex Norton
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 
-function Square128(gpgpUtility_) {
+function NearestVertex(gpgpUtility_) {
   "use strict";
 
   /** WebGLRenderingContext */
@@ -40,6 +40,8 @@ function Square128(gpgpUtility_) {
     let program;
 
     // Note that the preprocessor requires the newlines.
+    // Assume vertex_count  < 16M ~ 2^12 (2048x2048) for texture size
+    // Assume contact_count < 65K ~ 2^8  (256x256)   for texture size
     fragmentShaderSource = "#ifdef GL_FRAGMENT_PRECISION_HIGH\n"
                          + "precision highp float;\n"
                          + "#else\n"
@@ -55,8 +57,8 @@ function Square128(gpgpUtility_) {
                          + "  float i, j;"
                          + "  float value = 0.0;"
                          + ""
-                         + "  i = vTextureCoord.s;"
-                         + "  j = vTextureCoord.t;"
+                         + "  i = vTextureCoord.s;" // [0, 1] -> x
+                         + "  j = vTextureCoord.t;" // [0, 1] -> y
                          + ""
                          + "  for(float k=0.0; k<128.0; ++k)"
                          + "  {"
