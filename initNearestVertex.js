@@ -65,43 +65,63 @@ function connsToBuffer(conns) {
   return connsList;
 }
 
+// Parse binary blob -> ArrayBuffer
+function blobToBuff(blob) {
+    return new Promise((f, r) => {
+        const fr = new FileReader();
+        fr.onload = () => {
+            f(fr.result);
+        };
+        fr.readAsArrayBuffer(blob);
+    });
+}
+
 let connsBuffer = connsToBuffer(conns);
-debugger;
+let vertsBuffer;
 
+fetch("./verts-10010.bin").then((res) => {
+    return res.blob();
+})
+.then((blob) => {
+    return blobToBuff(blob);
+})
+.then((ab) => {
+    vertsBuffer = new Float32Array(ab);
+});
 
-if (gpgpUtility.isFloatingTexture()) {
-    let gl = gpgpUtility.getGLContext();
+// if (gpgpUtility.isFloatingTexture()) {
+//     let gl = gpgpUtility.getGLContext();
     
-    // Manually load up test data into <texture>
-    let data = new Float32Array(matrixColumns * matrixRows * 4);
-        // data = data.map(() => Math.random() * 128);
-        data = data.map((d, i) => i);
+//     // Manually load up test data into <texture>
+//     let data = new Float32Array(matrixColumns * matrixRows * 4);
+//         // data = data.map(() => Math.random() * 128);
+//         data = data.map((d, i) => i);
 
-  // Height and width are set in the constructor.
-  texture      = gpgpUtility.makeTexture(WebGLRenderingContext.FLOAT, null);
-                 gpgpUtility.refreshTexture(texture, gl.FLOAT, data);
-  texture2     = gpgpUtility.makeTexture(WebGLRenderingContext.FLOAT, null);
+//   // Height and width are set in the constructor.
+//   texture      = gpgpUtility.makeTexture(WebGLRenderingContext.FLOAT, null);
+//                  gpgpUtility.refreshTexture(texture, gl.FLOAT, data);
+//   texture2     = gpgpUtility.makeTexture(WebGLRenderingContext.FLOAT, null);
 
-  bufferStatus = gpgpUtility.frameBufferIsComplete();
+//   bufferStatus = gpgpUtility.frameBufferIsComplete();
 
-  if (bufferStatus.isComplete) {
+//   if (bufferStatus.isComplete) {
 
-    square128 = new Square128(gpgpUtility);
-    square128.square(texture, texture2);
+//     square128 = new NearestVertex(gpgpUtility);
+//     square128.square(texture, texture2);
 
-    // Delete resources no longer in use.
-    square128.done();
+//     // Delete resources no longer in use.
+//     square128.done();
 
-    let table = document.createElement("TABLE");
-                document.body.appendChild(table);
+//     let table = document.createElement("TABLE");
+//                 document.body.appendChild(table);
 
-    // Tests, terminate on first failure.
-    square128.test(0, 0, table);
-  }
-  else {
-    alert(bufferStatus.message);
-  }
-}
-else {
-  alert("Floating point textures are not supported.");
-}
+//     // Tests, terminate on first failure.
+//     square128.test(0, 0, table);
+//   }
+//   else {
+//     alert(bufferStatus.message);
+//   }
+// }
+// else {
+//   alert("Floating point textures are not supported.");
+// }
