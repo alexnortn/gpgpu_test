@@ -189,7 +189,7 @@ window.vizit.utility = window.vizit.utility || {};
                         0,             // yOffset
                         problemWidth,  // Width - normalized to s.
                         problemHeight, // Height - normalized to t.
-                        gl.RGBA,       // Format for each pixel.
+                        gl.RGB,       // Format for each pixel.
                         type,          // Data type for each chanel.
                         data);         // Image data in the described format, or null.
 
@@ -226,11 +226,11 @@ window.vizit.utility = window.vizit.utility || {};
        // Pixel format and data for the texture
        gl.texImage2D(gl.TEXTURE_2D, // Target, matches bind above.
                      0,             // Level of detail.
-                     gl.RGBA,       // Internal format.
+                     gl.RGB,       // Internal format.
                      width,         // Width - normalized to s.
                      height,        // Height - normalized to t.
                      0,             // Always 0 in OpenGL ES.
-                     gl.RGBA,       // Format for each pixel.
+                     gl.RGB,       // Format for each pixel.
                      type,          // Data type for each chanel.
                      data);         // Image data in the described format, or null.
        // Unbind the texture.

@@ -7,18 +7,19 @@ let nearestVertex;
 let matrixColumns;
 let matrixRows;
 let framebuffer;
-let texture;
 let framebuffer2;
-let texture2;
+let connsTexture;
+let vertsTexture;
+let outTexture;
 
 // Assume vertex_count  < 5M (16M / 3) ~ 2^12 (2048x2048) for texture size
-matrixColumns = 2048;
-matrixRows    = 2048;
+matrixColumns = 128;
+matrixRows    = 128;
 gpgpUtility   = new vizit.utility.GPGPUtility(matrixColumns, matrixRows, {premultipliedAlpha:false});
 
 // Assume contact_count < 21K (65K / 3) ~ 2^8 (256x256) for texture size
 function connsToBuffer(conns) {
-  let connsList = new Float32Array(Math.pow(Math.pow(2,8), 2));
+  let connsList = new Float32Array(matrixColumns * matrixRows * 3);
   let index = 0;
   
   let now = performance.now();
@@ -35,49 +36,69 @@ function connsToBuffer(conns) {
   return connsList;
 }
 
-let connsBuffer = connsToBuffer(conns);
-let vertsBuffer;
+// Size = matrixColumns * matrixRows * 3
+function makeFloat32Buffer(data) {
+  let buff = new Float32Array(1024 * 1024 * 3);
+  
+  if (data) {
+    data.forEach((d, i) => buff[i] = d);
+  }  
+  return buff;
+}
 
 fetch("./verts-10010.bin").then((res) => {
     return res.arrayBuffer();
 })
 .then((ab) => {
-    vertsBuffer = new Float32Array(ab);
+    let vbuff = new Float32Array(ab);
+        vbuff = makeFloat32Buffer(vbuff); // Resize buffer for gpu texture 
+    let obuff = makeFloat32Buffer();
+    let cbuff = connsToBuffer(conns);
+    // Then load up the gpu textures, setup the class
+    initGPU(vbuff, cbuff, obuff);
 });
 
-if (gpgpUtility.isFloatingTexture()) {
+function initGPU(vbuff, cbuff, obuff) {
+  if (gpgpUtility.isFloatingTexture()) {
     let gl = gpgpUtility.getGLContext();
-    
-    // Manually load up test data into <texture>
-    let data = new Float32Array(matrixColumns * matrixRows * 4);
-        // data = data.map(() => Math.random() * 128);
-        data = data.map((d, i) => i);
 
-  // Height and width are set in the constructor.
-  texture      = gpgpUtility.makeTexture(WebGLRenderingContext.FLOAT, null);
-                 gpgpUtility.refreshTexture(texture, gl.FLOAT, data);
-  texture2     = gpgpUtility.makeTexture(WebGLRenderingContext.FLOAT, null);
+    // Height and width are set in the constructor.
+    connsTexture = gpgpUtility.makeTexture(WebGLRenderingContext.FLOAT, null);
+                  gpgpUtility.refreshTexture(connsTexture, gl.FLOAT, cbuff);
 
-  bufferStatus = gpgpUtility.frameBufferIsComplete();
+    vertsTexture = gpgpUtility.makeTexture(WebGLRenderingContext.FLOAT, null);
+                  gpgpUtility.refreshTexture(vertsTexture, gl.FLOAT, vbuff);
 
-  if (bufferStatus.isComplete) {
+    outTexture = gpgpUtility.makeTexture(WebGLRenderingContext.FLOAT, null);
+                  gpgpUtility.refreshTexture(outTexture, gl.FLOAT, obuff);
 
-    // nearestVertex = new NearestVertex(gpgpUtility);
-    // nearestVertex.go(texture, texture2);
+    bufferStatus = gpgpUtility.frameBufferIsComplete();
 
-    // Delete resources no longer in use.
-    // nearestVertex.done();
+    if (bufferStatus.isComplete) {
 
-    let table = document.createElement("TABLE");
-                document.body.appendChild(table);
+      nearestVertex = new NearestVertex(gpgpUtility);
+      
+      for (let i=0; i < 10; i++) {
+        let now = performance.now();
+        nearestVertex.go(connsTexture, vertsTexture, outTexture);
+        console.log("finished in ", (performance.now() - now), "ms");
+      }
+      
+      // Delete resources no longer in use.
+      nearestVertex.done();
 
-    // Tests, terminate on first failure.
-    // nearestVertex.test(0, 0, table);
+      let table = document.createElement("TABLE");
+                  document.body.appendChild(table);
+
+      // Tests, terminate on first failure.
+      nearestVertex.test(0, 0, table);
+      debugger;
+    }
+    else {
+      alert(bufferStatus.message);
+    }
   }
   else {
-    alert(bufferStatus.message);
+    alert("Floating point textures are not supported.");
   }
-}
-else {
-  alert("Floating point textures are not supported.");
 }

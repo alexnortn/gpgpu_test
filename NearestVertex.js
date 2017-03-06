@@ -25,7 +25,8 @@ function NearestVertex(gpgpUtility_) {
   let positionHandle;
   let program;
   let textureCoordHandle;
-  let textureHandle;
+  let textureConnsHandle;
+  let textureVertsHandle;
 
   /**
    * Compile shaders and link them into a program, then retrieve references to the
@@ -40,39 +41,70 @@ function NearestVertex(gpgpUtility_) {
     let program;
 
     // Note that the preprocessor requires the newlines.
-    // Assume vertex_count  < 16M ~ 2^12 (2048x2048) for texture size
-    // Assume contact_count < 65K ~ 2^8  (256x256)   for texture size
+    // Assume 16M ~ 2^12 (2048x2048) for texture size
     fragmentShaderSource = "#ifdef GL_FRAGMENT_PRECISION_HIGH\n"
                          + "precision highp float;\n"
                          + "#else\n"
                          + "precision mediump float;\n"
                          + "#endif\n"
                          + ""
-                         + "uniform sampler2D uTexture;"
+                         + "uniform sampler2D uConnsTexture;"
+                         + ""
+                         + "uniform sampler2D uVertsTexture;"
                          + ""
                          + "varying vec2 vTextureCoord;"
                          + ""
-                         + "void main()"
-                         + "{"
+                         + "void main() {"
                          + "  float i, j;"
-                         + "  float value = 0.0;"
+                         + "  vec4 c;"
                          + ""
                          + "  i = vTextureCoord.s;" // [0, 1] -> x
                          + "  j = vTextureCoord.t;" // [0, 1] -> y
+                         + "  c = texture2D(uConnsTexture, vec2(i, j));" // Look up pixel contact value (rgb -> xyz)
                          + ""
-                         + "  for(float k=0.0; k<128.0; ++k)"
-                         + "  {"
-                         + "    value += texture2D(uTexture, vec2(i, k/128.0)).r * texture2D(uTexture, vec2(k/128.0, j)).r;"
+                         + "  if (c.x == 0.0 && c.y == 0.0 && c.z == 0.0) {"
+                         + "    return;" // If data is empty return
                          + "  }"
-                         + "  gl_FragColor.r = i ;"
+                         + ""
+                         + "  vec4 v;"
+                         + "  float md;" // Minimum Distance
+                         + "  float m;"  // Matrix Size (x == y)
+                         + "  float d2;"
+                         + "  float index;"
+                         + ""
+                         + "  md = 1.0 / 0.0000000000000000000001;" // ~infinity
+                         + "  m = 1024.0;"
+                         + "  d2 = 0.0;"
+                         + "  index = 0.0;"
+                         + ""
+                         + "  for(float k=0.0; k<1024.0; ++k) {"
+                         + "    for(float l=0.0; l<1024.0; ++l) {"
+                         + "      v = texture2D(uVertsTexture, vec2((k/m), (l/m)));" // Get vertex location
+                         + "      index++;"
+                         + "      if (v.x == 0.0 && v.y == 0.0 && v.z == 0.0) {"
+                         + "        break;" // If data is empty break
+                         + "      }"
+                         + "      d2 = (c.x - v.x) * (c.x - v.x) +" // Distance squared is faster 
+                         + "           (c.y - v.y) * (c.y - v.y) +"
+                         + "           (c.z - v.z) * (c.z - v.z) ;" 
+                         + "      if (d2 < md) {"
+                         + "        md = d2;"
+                         + "        gl_FragColor.r = index;"
+                         + "      }"
+                         + "    }"
+                         + "  }"
                          + "}";
 
     program            = gpgpUtility.createProgram(null, fragmentShaderSource);
-    positionHandle     = gpgpUtility.getAttribLocation(program,  "position");
+    
+    positionHandle     = gpgpUtility.getAttribLocation(program,  "position"); 
     gl.enableVertexAttribArray(positionHandle);
+    
     textureCoordHandle = gpgpUtility.getAttribLocation(program,  "textureCoord");
     gl.enableVertexAttribArray(textureCoordHandle);
-    textureHandle      = gpgpUtility.getUniformLocation(program, "uTexture");
+    
+    textureConnsHandle = gpgpUtility.getUniformLocation(program, "uConnsTexture");
+    textureVertsHandle = gpgpUtility.getUniformLocation(program, "uVertsTexture");
 
     return program;
   }
@@ -82,26 +114,33 @@ function NearestVertex(gpgpUtility_) {
    * texture are populated with the square of the input matrix, m. Use
    * gl.readPixels to retrieve texture values.
    *
-   * @param m        {WebGLTexture} A texture containing the elements of m.
-   * @param mSquared {WebGLTexture} A texture to be incorporated into a fbo,
-   *                                the target for our operations.
+   * @param connsTexture        {WebGLTexture} A texture containing the elements of conns.
+   * @param vertsTexture        {WebGLTexture} A texture containing the elements of verts.
+   * @param outTexture          {WebGLTexture} A texture to be incorporated into a fbo,
+   *                                             the target for our operations.
    */
-  this.go = function(m, mSquared) {
-    let m2FrameBuffer;
+  this.go = function(connsTexture, vertsTexture, outTexture) {
+    let outFrameBuffer;
 
     // Create and bind a framebuffer (for output)
-    m2FrameBuffer = gpgpUtility.attachFrameBuffer(mSquared);
+    outFrameBuffer = gpgpUtility.attachFrameBuffer(outTexture);
 
     gl.useProgram(program);
 
     gpgpUtility.getStandardVertices();
 
-    gl.vertexAttribPointer(positionHandle,     3, gl.FLOAT, gl.FALSE, 20, 0);
-    gl.vertexAttribPointer(textureCoordHandle, 2, gl.FLOAT, gl.FALSE, 20, 12);
+    gl.vertexAttribPointer(positionHandle,     3, gl.FLOAT, gl.FALSE, 20, 0);  //
+    gl.vertexAttribPointer(textureCoordHandle, 2, gl.FLOAT, gl.FALSE, 20, 12); //
 
+    // Set up texture (conns)
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, m);
-    gl.uniform1i(textureHandle, 0);
+    gl.bindTexture(gl.TEXTURE_2D, connsTexture);
+    gl.uniform1i(textureConnsHandle, 0);
+
+    // Set up texture (verts)
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, vertsTexture);
+    gl.uniform1i(textureVertsHandle, 1); // Check on this
 
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
@@ -140,16 +179,14 @@ function NearestVertex(gpgpUtility_) {
                   j,                // y-coord of lower left corner
                   1,                // width of the block
                   1,                // height of the block
-                  gl.RGBA,          // Format of pixel data.
+                  gl.RGBA,           // Format of pixel data.
                   gl.FLOAT,         // Data type of the pixel data, must match makeTexture
                   buffer);          // Load pixel data into buffer
 
     compare    = 0.0;
     fromPixels = 0.0;
 
-    debugger;
-
-    for(let k=0.0; k<128.0; ++k) {
+    for(let k=0.0; k<2048.0; ++k) {
       compare += this.element(i, k)*this.element(k, j);
     }
 
@@ -163,7 +200,7 @@ function NearestVertex(gpgpUtility_) {
     tableCell.appendChild(document.createTextNode("(" + i + ", " + j + ")"));
     // Found value column
     tableCell  = tableRow.insertCell();
-    tableCell.appendChild(document.createTextNode(buffer[0])); //buffer?
+    tableCell.appendChild(document.createTextNode(buffer)); //buffer?
     // Expected value column
     // tableCell  = tableRow.insertCell();
     // tableCell.appendChild(document.createTextNode(compare)); // compare?
