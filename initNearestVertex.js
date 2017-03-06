@@ -38,7 +38,7 @@ function connsToBuffer(conns) {
 
 // Size = matrixColumns * matrixRows * 3
 function makeFloat32Buffer(data) {
-  let buff = new Float32Array(1024 * 1024 * 3);
+  let buff = new Float32Array(2048 * 2048 * 3);
   
   if (data) {
     data.forEach((d, i) => buff[i] = d);
@@ -78,21 +78,18 @@ function initGPU(vbuff, cbuff, obuff) {
 
       nearestVertex = new NearestVertex(gpgpUtility);
       
-      for (let i=0; i < 10; i++) {
-        let now = performance.now();
-        nearestVertex.go(connsTexture, vertsTexture, outTexture);
-        console.log("finished in ", (performance.now() - now), "ms");
-      }
-      
-      // Delete resources no longer in use.
-      nearestVertex.done();
+      let now = performance.now();
+      nearestVertex.go(connsTexture, vertsTexture, outTexture);
+      console.log("finished in ~", (performance.now() - now), "ms");
 
+      // Delete resources no longer in use
+      nearestVertex.done();
+      
       let table = document.createElement("TABLE");
                   document.body.appendChild(table);
 
       // Tests, terminate on first failure.
-      nearestVertex.test(0, 0, table);
-      debugger;
+      // nearestVertex.test(0, 0, table);
     }
     else {
       alert(bufferStatus.message);

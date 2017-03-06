@@ -73,17 +73,17 @@ function NearestVertex(gpgpUtility_) {
                          + "  float index;"
                          + ""
                          + "  md = 1.0 / 0.0000000000000000000001;" // ~infinity
-                         + "  m = 1024.0;"
+                         + "  m = 2048.0;"
                          + "  d2 = 0.0;"
                          + "  index = 0.0;"
                          + ""
-                         + "  for(float k=0.0; k<1024.0; ++k) {"
-                         + "    for(float l=0.0; l<1024.0; ++l) {"
+                         + "  for(float k=0.0; k<2048.0; ++k) {"
+                         + "    for(float l=0.0; l<2048.0; ++l) {"
                          + "      v = texture2D(uVertsTexture, vec2((k/m), (l/m)));" // Get vertex location
                          + "      index++;"
-                         + "      if (v.x == 0.0 && v.y == 0.0 && v.z == 0.0) {"
-                         + "        break;" // If data is empty break
-                         + "      }"
+                        //  + "      if (v.x == 0.0 && v.y == 0.0 && v.z == 0.0) {"
+                        //  + "        break;" // If data is empty break
+                        //  + "      }"
                          + "      d2 = (c.x - v.x) * (c.x - v.x) +" // Distance squared is faster 
                          + "           (c.y - v.y) * (c.y - v.y) +"
                          + "           (c.z - v.z) * (c.z - v.z) ;" 
