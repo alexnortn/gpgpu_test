@@ -11,26 +11,57 @@ let framebuffer2;
 let connsTexture;
 let vertsTexture;
 let outTexture;
+let conns;
 
 matrixColumns = 1024;
 matrixRows    = 1024;
 gpgpUtility   = new vizit.utility.GPGPUtility(matrixColumns, matrixRows, {premultipliedAlpha:false});
 
-// Assume contact_count < 21K (65K / 3) ~ 2^8 (256x256) for texture size
-function connsToBuffer(conns) {
-  let connsList = new Float32Array(matrixColumns * matrixRows * 3);
-  let index = 0;
-  
-  Object.entries(conns).forEach(([cellName, cell]) => {
-    cell.forEach(contact => { 
-      connsList[index + 0] = contact.post.x;
-      connsList[index + 1] = contact.post.y;
-      connsList[index + 2] = contact.post.z;
-      index += 3;
-    });
-  });  
-  return connsList;
-}
+// Load conns data
+let connsPromise = fetch(`./conns-10010.json`) // Check if this data exists...
+.then(function(res) {
+    return res.json();
+})
+.then(function(data) {
+    let connsList = new Float32Array(matrixColumns * matrixRows * 3);
+    let index = 0;
+    
+    Object.entries(data).forEach(([cellName, cell]) => {
+      cell.forEach(contact => {
+        connsList[index + 0] = contact.post.x;
+        connsList[index + 1] = contact.post.y;
+        connsList[index + 2] = contact.post.z;
+        index += 3;
+      });
+    });  
+
+    return connsList;
+
+}).catch(() => {
+    console.log('conns promise rejected for', reason);
+});
+
+// Load verts data
+let vertsPromise = fetch("./verts-10010.bin").then((res) => {
+    return res.arrayBuffer();
+})
+.then((ab) => {
+    let vbuff = new Float32Array(ab);
+        vbuff = makeFloat32Buffer(vbuff, 1024, 3); // Resize buffer for gpu texture 
+        return vbuff;
+}).catch(() => {
+    console.log('geometry promise rejected for', reason);
+});
+
+Promise.all([connsPromise, vertsPromise]).then(([cbuff,vbuff]) => {
+    window.cbuff = cbuff;
+    window.vbuff = vbuff;
+    window.conns = conns;
+    
+    // Then load up the gpu textures, setup the class
+    let obuff = makeFloat32Buffer(null, 1024, 3);
+    initGPU(vbuff, cbuff, obuff);
+});
 
 // Size = matrixColumns * matrixRows * 3
 function makeFloat32Buffer(data, size, elems) {
@@ -40,18 +71,6 @@ function makeFloat32Buffer(data, size, elems) {
   }  
   return buff;
 }
-
-fetch("./verts-10010.bin").then((res) => {
-    return res.arrayBuffer();
-})
-.then((ab) => {
-    let vbuff = new Float32Array(ab);
-        vbuff = makeFloat32Buffer(vbuff, 1024, 3); // Resize buffer for gpu texture 
-    let obuff = makeFloat32Buffer(null, 1024, 3);
-    let cbuff = connsToBuffer(conns);
-    // Then load up the gpu textures, setup the class
-    initGPU(vbuff, cbuff, obuff);
-});
 
 function initGPU(vbuff, cbuff, obuff) {
   if (gpgpUtility.isFloatingTexture()) {

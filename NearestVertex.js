@@ -76,15 +76,17 @@ function NearestVertex(gpgpUtility_) {
                          + "    for(float l=0.0; l<1024.0; ++l) {"
                          + "      v = texture2D(uVertsTexture, vec2((l/m), (k/m)));" // Get vertex location
                          + "      index++;"
-                         + "      if (v.x == 0.0) {"
-                         + "        break;" // If data is empty break
-                         + "      }"
+                        //  + "      if (v.x == 0.0) {"
+                        //  + "        break;" // If data is empty break
+                        //  + "      }"
                          + "      d2 = (c.x - v.x) * (c.x - v.x) +" // Distance squared is faster 
                          + "           (c.y - v.y) * (c.y - v.y) +"
                          + "           (c.z - v.z) * (c.z - v.z) ;" 
                          + "      if (d2 < md) {"
                          + "        md = d2;"
                          + "        gl_FragColor.r = index;"
+                         + "        gl_FragColor.g = c.x;"
+                         + "        gl_FragColor.b = c.y;"
                          + "      }"
                          + "    }"
                          + "  }"
@@ -184,6 +186,7 @@ function NearestVertex(gpgpUtility_) {
       }
     }
 
+    window.buffer = buffer;
     window.dBuff = new Float32Array(bufferLength);
            dBuff.forEach((item, index) => dBuff[index] = buffer[index * 4]);
 
