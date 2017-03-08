@@ -188,7 +188,7 @@ function NearestVertex(gpgpUtility_) {
            dBuff.forEach((item, index) => dBuff[index] = buffer[index * 4]);
 
   window.download = function(data) {
-      const blob = new Blob([data]);
+      const blob = new Blob([data], { type: "application/octet-stream"});
       window.open(URL.createObjectURL(blob), "_blank");
   }
 
