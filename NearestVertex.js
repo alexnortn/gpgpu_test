@@ -85,8 +85,6 @@ function NearestVertex(gpgpUtility_) {
                          + "      if (d2 < md) {"
                          + "        md = d2;"
                          + "        gl_FragColor.r = index;"
-                         + "        gl_FragColor.g = m * vTextureCoord.s;"
-                         + "        gl_FragColor.b = m * vTextureCoord.t;"
                          + "      }"
                          + "    }"
                          + "  }"
@@ -155,10 +153,9 @@ function NearestVertex(gpgpUtility_) {
    * @param j       {integer} the j index of the matrix element to be tested.
    * @param display {HTMLTableElement} A table for test results.
    */
-  this.test = function(i, j, display) {
+  this.test = function() {
     let buffer;
     let compare;
-    let eps;
     let expected;
     let fromPixels;
     let passed;
@@ -167,45 +164,36 @@ function NearestVertex(gpgpUtility_) {
     let tableHeader;
     let tableRow;
 
-    eps    = 1.0E-07;
-
     // One each for RGBA component of a pixel
-    buffer = new Float32Array(4);
+    buffer = new Float32Array(4*1024*1024);
     // Read a 1x1 block of pixels, a single pixel -> read out a pixel block at loc [i,j] of area [size, size]
-    gl.readPixels(i,                // x-coord of lower left corner
-                  j,                // y-coord of lower left corner
-                  1,                // width of the block
-                  1,                // height of the block
+    gl.readPixels(0,                // x-coord of lower left corner
+                  0,                // y-coord of lower left corner
+                  1024,                // width of the block
+                  1024,                // height of the block
                   gl.RGBA,           // Format of pixel data.
                   gl.FLOAT,         // Data type of the pixel data, must match makeTexture
                   buffer);          // Load pixel data into buffer
+  
+    let bufferLength = 0;
+    for(let i=0; i<buffer.length; i+=4) {
+      bufferLength++;
+      if (buffer[i] === 0) {
+        console.log('break', bufferLength);
+        break;
+      }
+    }
 
-    compare    = 0.0;
-    fromPixels = 0.0;
-    ratio      = Math.abs((compare-buffer[0])/compare);
-    passed     = ratio < eps;
+    window.dBuff = new Float32Array(bufferLength);
+           dBuff.forEach((item, index) => dBuff[index] = buffer[index * 4]);
 
-    tableRow   = display.insertRow();
-    // Coordinates column
-    tableCell  = tableRow.insertCell();
-    tableCell.appendChild(document.createTextNode("(" + i + ", " + j + ")"));
-    // Found value column
-    tableCell  = tableRow.insertCell();
-    tableCell.appendChild(document.createTextNode(buffer)); //buffer?
-    // Expected value column
-    // tableCell  = tableRow.insertCell();
-    // tableCell.appendChild(document.createTextNode(compare)); // compare?
-    // Relative error
-    // tableCell  = tableRow.insertCell();
-    // tableCell.appendChild(document.createTextNode(ratio.toPrecision(2))); // ratio?
+  window.download = function(data) {
+      const blob = new Blob([data]);
+      window.open(URL.createObjectURL(blob), "_blank");
+  }
 
-    // if (!passed)
-    // {
-    //   tableRow.classList.add("warn");
-    // }
-
-    // return passed;
   };
+  
 
   /**
    * Invoke to clean up resources specific to this program. We leave the texture

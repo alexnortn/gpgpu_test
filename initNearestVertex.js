@@ -79,15 +79,8 @@ function initGPU(vbuff, cbuff, obuff) {
                   document.body.appendChild(table);
 
       // Tests, terminate on first failure.
-      let index = 0;
-      for(let i=0; i<8; i++) {
-        for(let j=0; j<1024; j++) {
-          setTimeout(function() {
-            console.log(index++);
-            nearestVertex.test(j, i, table);
-          }, 1);
-        }
-      }
+      nearestVertex.test();
+
     }
     else {
       alert(bufferStatus.message);
