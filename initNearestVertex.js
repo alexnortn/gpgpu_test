@@ -12,9 +12,8 @@ let connsTexture;
 let vertsTexture;
 let outTexture;
 
-// Assume vertex_count  < 5M (16M / 3) ~ 2^12 (2048x2048) for texture size
-matrixColumns = 128;
-matrixRows    = 128;
+matrixColumns = 1024;
+matrixRows    = 1024;
 gpgpUtility   = new vizit.utility.GPGPUtility(matrixColumns, matrixRows, {premultipliedAlpha:false});
 
 // Assume contact_count < 21K (65K / 3) ~ 2^8 (256x256) for texture size
@@ -22,24 +21,20 @@ function connsToBuffer(conns) {
   let connsList = new Float32Array(matrixColumns * matrixRows * 3);
   let index = 0;
   
-  let now = performance.now();
   Object.entries(conns).forEach(([cellName, cell]) => {
     cell.forEach(contact => { 
-      connsList[index]     = contact.post.x;
+      connsList[index + 0] = contact.post.x;
       connsList[index + 1] = contact.post.y;
       connsList[index + 2] = contact.post.z;
       index += 3;
     });
-  });
-
-  // console.log('done in', (performance.now() - now), 'ms');
+  });  
   return connsList;
 }
 
 // Size = matrixColumns * matrixRows * 3
-function makeFloat32Buffer(data) {
-  let buff = new Float32Array(2048 * 2048 * 3);
-  
+function makeFloat32Buffer(data, size, elems) {
+  let buff = new Float32Array(size * size * elems);
   if (data) {
     data.forEach((d, i) => buff[i] = d);
   }  
@@ -51,8 +46,8 @@ fetch("./verts-10010.bin").then((res) => {
 })
 .then((ab) => {
     let vbuff = new Float32Array(ab);
-        vbuff = makeFloat32Buffer(vbuff); // Resize buffer for gpu texture 
-    let obuff = makeFloat32Buffer();
+        vbuff = makeFloat32Buffer(vbuff, 1024, 3); // Resize buffer for gpu texture 
+    let obuff = makeFloat32Buffer(null, 1024, 3);
     let cbuff = connsToBuffer(conns);
     // Then load up the gpu textures, setup the class
     initGPU(vbuff, cbuff, obuff);
@@ -63,14 +58,9 @@ function initGPU(vbuff, cbuff, obuff) {
     let gl = gpgpUtility.getGLContext();
 
     // Height and width are set in the constructor.
-    connsTexture = gpgpUtility.makeTexture(WebGLRenderingContext.FLOAT, null);
-                  gpgpUtility.refreshTexture(connsTexture, gl.FLOAT, cbuff);
-
-    vertsTexture = gpgpUtility.makeTexture(WebGLRenderingContext.FLOAT, null);
-                  gpgpUtility.refreshTexture(vertsTexture, gl.FLOAT, vbuff);
-
-    outTexture = gpgpUtility.makeTexture(WebGLRenderingContext.FLOAT, null);
-                  gpgpUtility.refreshTexture(outTexture, gl.FLOAT, obuff);
+    connsTexture = gpgpUtility.makeTexture(gl.FLOAT, cbuff);
+    vertsTexture = gpgpUtility.makeTexture(gl.FLOAT, vbuff);
+    outTexture   = gpgpUtility.makeTexture(gl.FLOAT, obuff);
 
     bufferStatus = gpgpUtility.frameBufferIsComplete();
 
@@ -84,12 +74,20 @@ function initGPU(vbuff, cbuff, obuff) {
 
       // Delete resources no longer in use
       nearestVertex.done();
-      
+
       let table = document.createElement("TABLE");
                   document.body.appendChild(table);
 
       // Tests, terminate on first failure.
-      // nearestVertex.test(0, 0, table);
+      let index = 0;
+      for(let i=0; i<8; i++) {
+        for(let j=0; j<1024; j++) {
+          setTimeout(function() {
+            console.log(index++);
+            nearestVertex.test(j, i, table);
+          }, 1);
+        }
+      }
     }
     else {
       alert(bufferStatus.message);

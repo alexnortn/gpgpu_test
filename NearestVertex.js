@@ -41,7 +41,6 @@ function NearestVertex(gpgpUtility_) {
     let program;
 
     // Note that the preprocessor requires the newlines.
-    // Assume 16M ~ 2^12 (2048x2048) for texture size
     fragmentShaderSource = "#ifdef GL_FRAGMENT_PRECISION_HIGH\n"
                          + "precision highp float;\n"
                          + "#else\n"
@@ -49,20 +48,16 @@ function NearestVertex(gpgpUtility_) {
                          + "#endif\n"
                          + ""
                          + "uniform sampler2D uConnsTexture;"
-                         + ""
                          + "uniform sampler2D uVertsTexture;"
                          + ""
                          + "varying vec2 vTextureCoord;"
                          + ""
                          + "void main() {"
-                         + "  float i, j;"
                          + "  vec4 c;"
                          + ""
-                         + "  i = vTextureCoord.s;" // [0, 1] -> x
-                         + "  j = vTextureCoord.t;" // [0, 1] -> y
-                         + "  c = texture2D(uConnsTexture, vec2(i, j));" // Look up pixel contact value (rgb -> xyz)
+                         + "  c = texture2D(uConnsTexture, vTextureCoord);" // Look up pixel contact value (rgb -> xyz)
                          + ""
-                         + "  if (c.x == 0.0 && c.y == 0.0 && c.z == 0.0) {"
+                         + "  if (c.x == 0.0) {"
                          + "    return;" // If data is empty return
                          + "  }"
                          + ""
@@ -73,23 +68,25 @@ function NearestVertex(gpgpUtility_) {
                          + "  float index;"
                          + ""
                          + "  md = 1.0 / 0.0000000000000000000001;" // ~infinity
-                         + "  m = 2048.0;"
+                         + "  m = 1024.0;"
                          + "  d2 = 0.0;"
                          + "  index = 0.0;"
                          + ""
-                         + "  for(float k=0.0; k<2048.0; ++k) {"
-                         + "    for(float l=0.0; l<2048.0; ++l) {"
-                         + "      v = texture2D(uVertsTexture, vec2((k/m), (l/m)));" // Get vertex location
+                         + "  for(float k=0.0; k<1024.0; ++k) {"
+                         + "    for(float l=0.0; l<1024.0; ++l) {"
+                         + "      v = texture2D(uVertsTexture, vec2((l/m), (k/m)));" // Get vertex location
                          + "      index++;"
-                        //  + "      if (v.x == 0.0 && v.y == 0.0 && v.z == 0.0) {"
-                        //  + "        break;" // If data is empty break
-                        //  + "      }"
+                         + "      if (v.x == 0.0) {"
+                         + "        break;" // If data is empty break
+                         + "      }"
                          + "      d2 = (c.x - v.x) * (c.x - v.x) +" // Distance squared is faster 
                          + "           (c.y - v.y) * (c.y - v.y) +"
                          + "           (c.z - v.z) * (c.z - v.z) ;" 
                          + "      if (d2 < md) {"
                          + "        md = d2;"
                          + "        gl_FragColor.r = index;"
+                         + "        gl_FragColor.g = m * vTextureCoord.s;"
+                         + "        gl_FragColor.b = m * vTextureCoord.t;"
                          + "      }"
                          + "    }"
                          + "  }"
@@ -185,13 +182,7 @@ function NearestVertex(gpgpUtility_) {
 
     compare    = 0.0;
     fromPixels = 0.0;
-
-    for(let k=0.0; k<2048.0; ++k) {
-      compare += this.element(i, k)*this.element(k, j);
-    }
-
     ratio      = Math.abs((compare-buffer[0])/compare);
-
     passed     = ratio < eps;
 
     tableRow   = display.insertRow();
@@ -208,12 +199,12 @@ function NearestVertex(gpgpUtility_) {
     // tableCell  = tableRow.insertCell();
     // tableCell.appendChild(document.createTextNode(ratio.toPrecision(2))); // ratio?
 
-    if (!passed)
-    {
-      tableRow.classList.add("warn");
-    }
+    // if (!passed)
+    // {
+    //   tableRow.classList.add("warn");
+    // }
 
-    return passed;
+    // return passed;
   };
 
   /**
